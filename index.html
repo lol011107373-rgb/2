@@ -219,8 +219,8 @@
           // Normalize OS/device_type
           let os = offer.device_type || "غير معروف";
           if (os.toLowerCase() === "ince") os = "كمبيوتر";
-          if (os.toLowerCase() === "mobile android") os = "أندرويد";
-          if (os.toLowerCase() === "mobile ios") os = "أبل";
+          if (os.toLowerCase() === "mobile_droid") os = "أندرويد";
+          if (os.toLowerCase() === "mobile_ios") os = "أبل";
 
           const key = countryName + " - " + os;
           if (!allGrouped[key]) allGrouped[key] = [];
