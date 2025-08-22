@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>عروض CPA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #f7fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --pastel: #dbeafe;
+      --pastel-hover: #bfdbfe;
+      --accent: #94a3b8;
+      --radius: 18px;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Cairo", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      background:
+        radial-gradient(1200px 600px at -10% -20%, #eef2ff 10%, transparent 60%),
+        radial-gradient(1000px 600px at 110% 120%, #f0f9ff 10%, transparent 60%),
+        var(--bg);
+      color:var(--text);
+      min-height:100dvh;
+      display:flex; align-items:flex-start; justify-content:center;
+      padding:24px;
+      direction:rtl;
+    }
+    .wrap{ width:100%; max-width:780px; }
+    .card{
+      background:var(--card);
+      border-radius:calc(var(--radius) + 6px);
+      box-shadow:var(--shadow);
+      padding:28px;
+      border:1px solid #e2e8f0;
+      position:relative;
+    }
+    header{
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:20px;
+    }
+    h1{ margin:0; font-size:clamp(22px, 4.2vw, 34px); font-weight:800; }
+    .search-box{
+      position:relative;
+      max-width:250px;
+      width:100%;
+    }
+    .search-input{
+      width:100%;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #c7d2fe;
+      background:var(--pastel);
+      font-size:14px;
+      text-align:right;
+    }
+    .autocomplete-list{
+      position:absolute;
+      top:100%;
+      right:0;
+      left:0;
+      background:white;
+      border:1px solid #c7d2fe;
+      border-radius:8px;
+      box-shadow:var(--shadow);
+      max-height:200px;
+      overflow-y:auto;
+      z-index:1000;
+    }
+    .autocomplete-item{
+      padding:10px;
+      cursor:pointer;
+      text-align:right;
+    }
+    .autocomplete-item:hover{
+      background:var(--pastel-hover);
+    }
+    .grid{ display:grid; grid-template-columns:repeat(1, 1fr); gap:12px; margin-top:16px; }
+    @media (min-width:520px){ .grid{ grid-template-columns:repeat(2, 1fr);} }
+    @media (min-width:860px){ .grid{ grid-template-columns:repeat(3, 1fr);} }
+    a.btn{
+      display:flex; align-items:center; justify-content:flex-start;
+      gap:10px;
+      text-decoration:none;
+      background:var(--pastel);
+      padding:14px 16px;
+      border-radius:var(--radius);
+      border:1px solid #c7d2fe;
+      transition:transform .08s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      color:#0b1324;
+      font-weight:700;
+      letter-spacing:.2px;
+      box-shadow:0 4px 14px rgba(15, 23, 42, .06);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      direction:rtl;
+    }
+    a.btn:hover{ background:var(--pastel-hover); border-color:#a5b4fc; transform:translateY(-1px) }
+    a.btn:active{ transform:translateY(0) scale(.99) }
+    .flag{ font-size:18px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1>العروض المتاحة</h1>
+        <div class="search-box">
+          <input type="text" id="search" class="search-input" placeholder="ابحث عن الدولة...">
+          <div id="autocomplete" class="autocomplete-list" style="display:none;"></div>
+        </div>
+      </header>
+      <div id="offers" class="grid"></div>
+    </div>
+  </div>
+
+  <script>
+    const countryMap = {
+      SA: "المملكة العربية السعودية",
+      EG: "مصر",
+      MA: "المغرب",
+      TN: "تونس",
+      LY: "ليبيا",
+      IQ: "العراق",
+      LB: "لبنان",
+      PS: "فلسطين",
+      JO: "الأردن",
+      AE: "الإمارات العربية المتحدة",
+      QA: "قطر",
+      KW: "الكويت",
+      BH: "البحرين",
+      OM: "عمان",
+      DZ: "الجزائر",
+      SD: "السودان",
+      SY: "سوريا",
+      YE: "اليمن",
+      SO: "الصومال",
+      MR: "موريتانيا",
+      DJ: "جيبوتي",
+      KM: "جزر القمر"
+    };
+
+    function codeToFlag(code) {
+      if (!code) return "";
+      return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt()));
+    }
+
+    let allGrouped = {};
+    let allCountries = [];
+
+    function renderOffers(filterCountry = null) {
+      const offersDiv = document.getElementById("offers");
+      offersDiv.innerHTML = "";
+      Object.keys(allGrouped)
+        .sort((a, b) => a.localeCompare(b, 'ar'))
+        .forEach(key => {
+          allGrouped[key].forEach((offer, index) => {
+            if (filterCountry && offer.countryName !== filterCountry) return;
+            const btn = document.createElement("a");
+            btn.className = "btn";
+            btn.href = offer.offer_url;
+            btn.target = "_blank";
+            btn.innerHTML = `<span class="flag">${offer.flag}</span> ${offer.countryName} (${offer.os}) (${index + 1})`;
+            offersDiv.appendChild(btn);
+          });
+        });
+    }
+
+    function showAutocomplete(matches) {
+      const box = document.getElementById("autocomplete");
+      box.innerHTML = "";
+      if (matches.length === 0) { box.style.display = "none"; return; }
+      matches.forEach(country => {
+        const div = document.createElement("div");
+        div.className = "autocomplete-item";
+        div.textContent = country;
+        div.onclick = () => {
+          document.getElementById("search").value = country;
+          box.style.display = "none";
+          renderOffers(country);
+        };
+        box.appendChild(div);
+      });
+      box.style.display = "block";
+    }
+
+    document.getElementById("search").addEventListener("input", e => {
+      const val = e.target.value;
+      if (!val) { renderOffers(); document.getElementById("autocomplete").style.display = "none"; return; }
+      const matches = allCountries.filter(c => c.startsWith(val));
+      showAutocomplete(matches);
+    });
+
+    document.getElementById("search").addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        const country = e.target.value;
+        renderOffers(country);
+        document.getElementById("autocomplete").style.display = "none";
+      }
+    });
+
+    // Load JSON
+    fetch("csvjson.json")
+      .then(res => res.json())
+      .then(data => {
+        allGrouped = {};
+        allCountries = [];
+
+        data.forEach(offer => {
+          if (!countryMap[offer.country_codes]) return; // Skip non-Arabic countries
+          const countryName = countryMap[offer.country_codes] || offer.country_codes;
+          const flag = codeToFlag(offer.country_codes);
+
+          // Normalize OS/device_type
+          let os = offer.device_type || "غير معروف";
+          if (os.toLowerCase() === "ince") os = "كمبيوتر";
+          if (os.toLowerCase() === "mobile android") os = "أندرويد";
+          if (os.toLowerCase() === "mobile ios") os = "أبل";
+
+          const key = countryName + " - " + os;
+          if (!allGrouped[key]) allGrouped[key] = [];
+          allGrouped[key].push({ ...offer, flag, countryName, os });
+
+          if (!allCountries.includes(countryName)) allCountries.push(countryName);
+        });
+
+        renderOffers();
+      });
+  </script>
+</body>
+</html>
